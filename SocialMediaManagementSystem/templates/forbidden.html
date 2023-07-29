@@ -15,11 +15,12 @@
             <div class="col-md-6">
                 <div class="alert alert-danger text-center" role="alert">
                     <h4 class="alert-heading">Forbidden</h4>
-                    <p class="mb-0">Too many failed login attempts. Your IP is blocked.</p>
-                </div>
-                <div class="countdown-container">
+                    <p class="mb-0">Too many failed login attempts. Your IP is blocked.</p> 
+                    <div class="countdown-container">
                     <div class="countdown-timer" id="countdown-timer"></div>
                 </div>
+                </div>
+               
             </div>
         </div>
     </div>
@@ -63,6 +64,7 @@
                 } else {
                     // Remove the cookie when the countdown is finished
                     document.cookie = 'timeRemaining=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    window.location.href = "{% url 'user-login' %}"; 
                 }
             }
 
