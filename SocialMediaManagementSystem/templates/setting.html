@@ -1,0 +1,52 @@
+{% extends '_base.html' %}
+{% load static %}
+{% block title %}
+    Settings
+{% endblock %}
+
+{% block nav %}
+{% include "navbar.html" %}
+{% endblock %}
+{% block content %}
+<div class="log-out-info-area d-flex align-items-center">
+    <div class="container">
+        <div class="log-out-content d-flex">
+            <div class="left d-flex align-items-center justify-content-center">
+                <div class="icon-img">
+                    <img src="{% static './image/icon-img.png' %}" alt="" />
+                </div>
+            </div>
+            <div class="right d-flex align-items-center justify-content-center">
+                <div class="right-content">
+                        {% if messages %}
+                            {% for message in messages %}
+                                {% if message.tags == 'success' %}
+                                    <p class="alert alert-success">{{ message }}</p>
+                                {% elif message.tags == 'error' %}
+                                    <p class="alert alert-danger">{{ message }}</p>
+                                {% else %}
+                                    <p class="alert alert-info">{{ message }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if email %}
+                        <a href="{% url 'change.status' %}">
+                            <button class="w-100 btn-1 btn-with-bg text-white" style="background-color:#F68B1F; color: white; border:none;">
+                                Status
+                            </button>
+                        </a>
+                        <br />
+                    {% endif %}
+                    <br>
+                    <a href="{% url 'user.logout' %}">
+                        <button class="w-100 btn-1 btn-with-bg text-white" style="background-color:#F68B1F; color: white; border:none;">
+                            Log Out
+                        </button>
+                    </a>
+                    <br />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

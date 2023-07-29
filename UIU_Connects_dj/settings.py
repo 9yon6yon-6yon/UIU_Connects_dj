@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'SocialMediaManagementSystem.middleware.FailedLoginMiddleware', 
 ]
 AUTHENTICATION_BACKENDS = [
   'django.contrib.auth.backends.ModelBackend',

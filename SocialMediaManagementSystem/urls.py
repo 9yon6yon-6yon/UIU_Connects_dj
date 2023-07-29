@@ -17,7 +17,9 @@ urlpatterns = [
     path('create-post/', create_post_view, name='create-post'),
     path('chat/dashboard/', chat_dashboard_view, name='chat.dashboard'),
     path('user/settings/', settings_view, name='user.settings'),
-    path('user/profile/all/<int:user_id>/',
-         user_profile_view, name='user.profile.all'),
+    path('user/logout/', logout, name='user.logout'),
+    path('user/status/', changestatus, name='change.status'),
+    path('user/profile/<int:user_id>/',
+         user_profile_view, name='user.profile'),
 
 ]

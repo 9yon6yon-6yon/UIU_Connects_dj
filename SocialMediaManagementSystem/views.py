@@ -2,7 +2,9 @@ from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+
 import random
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -36,6 +38,10 @@ def login(request):
         if check_password(password, user.password):
             if user.status == 'verified':
                 auth_login(request, user)
+                user.is_active = True
+                user.save()
+                request.session['user_id'] = user.u_id
+                request.session['email'] = user.email
                 return redirect('user.dashboard')
             else:
                 messages.error(request, 'Your account is not verified yet. Please check your email for verification instructions.')
@@ -144,6 +150,28 @@ def create_post_view(request):
 def chat_dashboard_view(request):
     return 
 def settings_view(request):
-    return 
+    email = request.session.get('email')
+    context = {
+        'email': email,
+    }
+    return render(request, 'setting.html', context)
+def changestatus(request):
+    user = Users.objects.get(email=request.session.get('email'))
+    if user.is_active:
+        user.is_active = False
+        user.save()
+        messages.success(request, 'Changed to Inactive')
+    else:
+        user.is_active = True
+        user.save()
+        messages.success(request, 'Changed to Active')
+    return redirect('user.settings')
 def user_profile_view(request):
     return 
+def logout(request):
+    email = request.session.get('email')
+    user = Users.objects.get(email=email)
+    user.is_active = False
+    user.save()
+    auth_logout(request)
+    return redirect('user-login') 
