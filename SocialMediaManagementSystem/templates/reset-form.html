@@ -34,25 +34,16 @@
                                     <input type="email" name="email" id="typeEmailX"
                                         class="form-control form-control-lg" placeholder="Email address"
                                         value="" />
-                                    {% if form.errors.email %}
-                                        <span class="text-danger"> {{ form.errors.email }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
                                     <input type="password" name="password" id="typePasswordX"
                                         class="form-control form-control-lg" placeholder="Password" />
-                                    {% if form.errors.password %}
-                                        <span class="text-danger"> {{ form.errors.password }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
                                     <input type="password" name="password_confirmation" id="typePasswordX"
                                         class="form-control form-control-lg" placeholder="Confirm Password" />
-                                    {% if form.errors.password_confirmation %}
-                                        <span class="text-danger"> {{ form.errors.password_confirmation }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <button class="btn btn-outline-light btn-lg px-5" type="submit"

@@ -29,15 +29,11 @@ def index(request):
 def login(request):
     if request.method == 'POST':
         email = request.POST['email']
-        passd = request.POST['password']
+        password = request.POST['password']
 
-        print("Email:", email)
-        print("Password:", passd)
-        user = Users.objects.check(email=email, password=passd)
-        print("User:", user)
-
-
-        if user:
+        user = Users.objects.get(email=email)
+        
+        if check_password(password, user.password):
             if user.status == 'verified':
                 auth_login(request, user)
                 return redirect('user.dashboard')

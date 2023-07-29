@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.hashers import check_password
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):

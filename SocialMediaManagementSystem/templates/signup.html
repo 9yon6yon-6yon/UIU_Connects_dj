@@ -30,23 +30,14 @@
 
                                 <div class="form-outline form-white mb-4">
                                     <input type="email" name="email" id="typeEmailX" class="form-control form-control-lg" placeholder="Email address" />
-                                    {% if form.errors.email %}
-                                        <span class="text-danger"> {{ form.errors.email }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
                                     <input type="password" name="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password" onkeyup="checkPasswordStrength()" />
-                                    {% if form.errors.password %}
-                                        <span class="text-danger"> {{ form.errors.password }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
                                     <input type="password" name="password_confirmation" id="typePasswordX2" class="form-control form-control-lg" placeholder="Confirm Password" />
-                                    {% if form.errors.password_confirmation %}
-                                        <span class="text-danger"> {{ form.errors.password_confirmation }} </span>
-                                    {% endif %}
                                 </div>
                                 <div class="form-outline form-white mb-4">
                                     <select id="user_type" name="type" class="custom-select">
@@ -62,9 +53,6 @@
                                     <label>
                                         I agree all statements in <a href="{%url 'index' %}" class="text-white-50"><u>Terms of service</u></a>
                                     </label><br>
-                                    {% if form.errors.condition %}
-                                        <span class="text-danger"> {{ form.errors.condition }} </span>
-                                    {% endif %}
                                 </div>
                                 <br>
                                 <button class="btn btn-outline-light btn-lg px-5" type="submit" name="signup" id="signup-btn">Signup</button>
