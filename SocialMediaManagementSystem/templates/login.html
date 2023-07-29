@@ -17,21 +17,23 @@
 
                                 <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
                                 <p class="text-white-50 mb-5">Please enter your email and password!</p>
-                                {% if fail %}
-                                    <p class="alert alert-warning">{{ fail }}</p>
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        {% if message.tags == 'success' %}
+                                            <p class="alert alert-success">{{ message }}</p>
+                                        {% elif message.tags == 'error' %}
+                                            <p class="alert alert-danger">{{ message }}</p>
+                                        {% else %}
+                                            <p class="alert alert-info">{{ message }}</p>
+                                        {% endif %}
+                                 {% endfor %}
                                 {% endif %}
                                 <div class="form-outline form-white mb-4">
                                     <input type="email" name="email" id="typeEmailX" class="form-control form-control-lg" placeholder="Email address" value="" />
-                                    {% if form.errors.email %}
-                                        <span class="text-danger"> {{ form.errors.email }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
                                     <input type="password" name="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password" />
-                                    {% if form.errors.password %}
-                                        <span class="text-danger"> {{ form.errors.password }} </span>
-                                    {% endif %}
                                 </div>
 
                                 <p class="small mb-5 pb-lg-2"><a class="text-white-50" href="{% url 'forget.password.form' %}">Forgot password?</a></p>

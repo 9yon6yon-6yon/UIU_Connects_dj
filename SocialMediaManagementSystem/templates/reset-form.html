@@ -19,7 +19,17 @@
 
                                 <h2 class="fw-bold mb-2 text-uppercase">Reset Password</h2>
                                 <p class="text-white-50 mb-5">Please enter your email and password!</p>
-
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        {% if message.tags == 'success' %}
+                                            <p class="alert alert-success">{{ message }}</p>
+                                        {% elif message.tags == 'error' %}
+                                            <p class="alert alert-danger">{{ message }}</p>
+                                        {% else %}
+                                            <p class="alert alert-info">{{ message }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
                                 <div class="form-outline form-white mb-4">
                                     <input type="email" name="email" id="typeEmailX"
                                         class="form-control form-control-lg" placeholder="Email address"

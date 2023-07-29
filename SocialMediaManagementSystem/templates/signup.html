@@ -5,8 +5,7 @@
     Sign Up
 {% endblock %}
 {% block content %}
-
-<form method="POST" action="{% url 'user-sign-up' %}">
+<form method="POST" action="{% url 'user-sign-up' %}" onsubmit="return validateForm()">
     {% csrf_token %}
     <section class="vh-100 gradient-custom">
         <div class="container py-5 h-100">
@@ -14,14 +13,21 @@
                 <div class="col-12 col-md-8 col-lg-6 col-xl-5">
                     <div class="card bg-dark text-white" style="border-radius: 1rem;">
                         <div class="card-body p-5 text-center">
-
                             <div class="mb-md-5 mt-md-4 pb-5">
-
                                 <h2 class="fw-bold mb-2 text-uppercase">Create new account</h2>
                                 <p class="text-white-50 mb-5">Please enter your information here!</p>
-                                {% if success %}
-                                    <p class="alert alert-success">{{ success }}</p>
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        {% if message.tags == 'success' %}
+                                            <p class="alert alert-success">{{ message }}</p>
+                                        {% elif message.tags == 'error' %}
+                                            <p class="alert alert-danger">{{ message }}</p>
+                                        {% else %}
+                                            <p class="alert alert-info">{{ message }}</p>
+                                        {% endif %}
+                                    {% endfor %}
                                 {% endif %}
+
                                 <div class="form-outline form-white mb-4">
                                     <input type="email" name="email" id="typeEmailX" class="form-control form-control-lg" placeholder="Email address" />
                                     {% if form.errors.email %}
@@ -30,14 +36,14 @@
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
-                                    <input type="password" name="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password" />
+                                    <input type="password" name="password" id="typePasswordX" class="form-control form-control-lg" placeholder="Password" onkeyup="checkPasswordStrength()" />
                                     {% if form.errors.password %}
                                         <span class="text-danger"> {{ form.errors.password }} </span>
                                     {% endif %}
                                 </div>
 
                                 <div class="form-outline form-white mb-4">
-                                    <input type="password" name="password_confirmation" id="typePasswordX" class="form-control form-control-lg" placeholder="Confirm Password" />
+                                    <input type="password" name="password_confirmation" id="typePasswordX2" class="form-control form-control-lg" placeholder="Confirm Password" />
                                     {% if form.errors.password_confirmation %}
                                         <span class="text-danger"> {{ form.errors.password_confirmation }} </span>
                                     {% endif %}
@@ -49,6 +55,8 @@
                                         <option value="admin">Admin</option>
                                     </select>
                                 </div>
+                                <div class="alert alert-info" id="passwordStrengthMsg" ></div>
+
                                 <div>
                                     <input id="condition-checkbox" class="form-check-input me-2" type="checkbox" value="" name="condition" required />
                                     <label>
@@ -75,4 +83,67 @@
     </section>
 </form>
 
+{% endblock %}
+{% block script %}
+
+<script>
+    function checkPasswordStrength() {
+        const password = document.getElementById('typePasswordX').value;
+        const passwordStrengthMsg = document.getElementById('passwordStrengthMsg');
+    
+        const hasLength = password.length >= 6;
+        const hasDigit = /\d/.test(password);
+        const hasSymbol = /[!@#$%^&*()_+\-=[\]{};\':"|,.<>/?]+/.test(password);
+        const hasUpper = /[A-Z]/.test(password);
+        const hasLower = /[a-z]/.test(password);
+    
+        const isStrong = hasLength && hasDigit && hasSymbol && hasUpper && hasLower;
+    
+        if (!password) {
+          passwordStrengthMsg.textContent = '';
+        } else if (isStrong) {
+          passwordStrengthMsg.textContent = 'Password is strong.';
+          passwordStrengthMsg.style.color = 'green';
+        } else {
+          passwordStrengthMsg.style.color = 'red';
+          let errorMessage = 'Please include:';
+          if (!hasLength) {
+            errorMessage += ' at least 6 characters,';
+          }
+          if (!hasDigit) {
+            errorMessage += ' 1 digit,';
+          }
+          if (!hasSymbol) {
+            errorMessage += ' 1 symbol,';
+          }
+          if (!hasUpper) {
+            errorMessage += ' 1 uppercase letter,';
+          }
+          if (!hasLower) {
+            errorMessage += ' 1 lowercase letter,';
+          }
+          // Remove the trailing comma and display the error message
+          errorMessage = errorMessage.slice(0, -1);
+          passwordStrengthMsg.textContent = errorMessage;
+        }
+      }
+    function validateForm() {
+        const email = document.getElementById('typeEmailX').value;
+        const password = document.getElementById('typePasswordX').value;
+        const confirmPassword = document.getElementById('typePasswordX2').value;
+        const userType = document.getElementById('user_type').value;
+
+        if (!email || !password || !confirmPassword || !userType) {
+            alert('Please fill in all the required fields.');
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+            alert('Password and Confirm Password must match.');
+            return false; 
+        }
+
+        return true; 
+    }
+</script>
 {% endblock %}

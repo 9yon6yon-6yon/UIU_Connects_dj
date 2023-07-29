@@ -1,6 +1,16 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-class Users(models.Model):
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+class Users(AbstractBaseUser):
     u_id = models.BigAutoField(primary_key=True)
     email = models.EmailField(unique=True)
     email_verified_at = models.DateTimeField(null=True)
@@ -19,7 +29,15 @@ class Users(models.Model):
     is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(null=True)
     updated_at = models.DateTimeField(null=True)
+    objects = CustomUserManager()
 
+class OTP(models.Model):
+    user = models.OneToOneField(Users, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email}: {self.otp}"
 class Awards(models.Model):
     awrd_id = models.BigAutoField(primary_key=True)
     user_id = models.ForeignKey(Users, on_delete=models.CASCADE)
