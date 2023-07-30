@@ -4,25 +4,12 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
-
 import random
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
-
-def send_otp_email(email, otp):
-    subject = 'OTP for Account Verification'
-    context = {'otp': otp}
-    html_message = render_to_string('otp_verification.html', context)
-    plain_message = strip_tags(html_message)
-    from_email = settings.EMAIL_HOST_USER
-    recipient_list = [email]
-
-    send_mail(subject, plain_message, from_email, recipient_list, html_message=html_message)
-
 from django.conf import settings
-
 from .models import *
 
 def index(request):

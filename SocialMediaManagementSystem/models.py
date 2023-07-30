@@ -19,7 +19,6 @@ class Users(AbstractBaseUser):
     USER_TYPES = [
         ('student', 'Student'),
         ('teacher', 'Teacher'),
-        ('admin', 'Admin'),
     ]
     user_type = models.CharField(choices=USER_TYPES, max_length=10, default='student')
     STATUS_CHOICES = [
