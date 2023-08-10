@@ -5,7 +5,7 @@
 {% endblock %}
 {% block content %}
 
-<form action="{% url 'reset.password' %}" method="post">
+<form action="{% url 'save.password' %}" method="post">
     {% csrf_token %}
     <section class="vh-100 gradient-custom">
         <input type="hidden" name="token" value="{{ token }}">
@@ -30,10 +30,11 @@
                                         {% endif %}
                                     {% endfor %}
                                 {% endif %}
+                                <input type="hidden" name="token" value="{{ token }}">
                                 <div class="form-outline form-white mb-4">
                                     <input type="email" name="email" id="typeEmailX"
                                         class="form-control form-control-lg" placeholder="Email address"
-                                        value="" />
+                                        value="{{ email }}" />
                                 </div>
 
                                 <div class="form-outline form-white mb-4">

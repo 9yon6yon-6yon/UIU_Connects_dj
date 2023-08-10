@@ -1,14 +1,17 @@
+from django.utils.crypto import get_random_string
 from django.utils import timezone
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.hashers import make_password
 import random
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
+from django.urls import reverse
 from django.conf import settings
 from .models import *
 
@@ -90,14 +93,86 @@ def send_otp_email(email, otp):
 
     send_mail(subject, plain_message, from_email, recipient_list, html_message=html_message)
 
+def send_reset_link(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+        if Users.objects.filter(email=email).exists():
+            token = get_random_string(64)
+            PasswordResetToken.objects.create(email=email, token=token, created_at=timezone.now())
+            reset_url = request.build_absolute_uri(reverse('reset.password', kwargs={'token': token, 'email': email}))
+            subject = 'Password Reset'
+            context = {'reset_url': reset_url}
+            html_message = render_to_string('reset-password-email.html', context)
+            plain_message = strip_tags(html_message)
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                html_message=html_message,
+            )
+            messages.success(request, 'A password reset link has been sent to your email accont.')
+            return redirect('forget.password.form') 
+        else:
+            messages.error(request, 'Invalid Email. Please try again.')
+            return redirect('forget.password.form')
+    else:
+        messages.error(request, 'Bad request')
+        return redirect('forget.password.form')  
 def forgotPassword(request):
     return render(request, 'forgot-form.html')
 
-def resetPassword(request):
-    return render(request, 'reset-form.html')
+def reset_Password(request,token,email):
+    context={
+        'token' : token,
+        'email' : email,
+    }
+    return render(request,'reset-form.html',context)
 
-def reseted_Password(request):
-    return render(request, 'reset-form.html')
+def save_Password(request):
+    if request.method == 'POST':
+        token = request.POST['token']
+        email = request.POST['email']
+        password = request.POST['password']
+        password_confirmation = request.POST['password_confirmation']
+
+        password_strength = verify_password_strength(password)
+
+        if password_strength:
+            for key, value in password_strength.items():
+                messages.error(request, value)
+                context = {
+                'token': token,
+                'email': email,
+            }
+            return render(request, 'reset-form.html', context)
+
+        if password != password_confirmation:
+            messages.error(request, "Password and confirmation do not match.")
+            return redirect('reset.password', token=token, email=email)
+
+        try:
+            check_token = PasswordResetToken.objects.get(email=email, token=token)
+        except PasswordResetToken.DoesNotExist:
+            messages.error(request, "Invalid token.")
+            return redirect('reset.password', token=token, email=email)
+
+        # Update user's password
+        user = Users.objects.get(email=email)
+        user.password = make_password(password)
+        user.save()
+
+        # Delete used token
+        check_token.delete()
+
+        messages.success(request, "Password reset successful. You can now log in with your new password.")
+        return redirect('user-login') 
+    else:
+        context = {
+            'token': token,
+            'email': email,
+        }
+        return render(request, 'reset-form.html', context)
 
 def verifyAccount(request):
     if request.method == 'POST':

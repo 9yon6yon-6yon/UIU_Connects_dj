@@ -1,81 +1,72 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <title>IP Blocked</title>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% extends '_base.html' %}
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-</head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center mt-5">
-            <div class="col-md-6">
-                <div class="alert alert-danger text-center" role="alert">
-                    <h4 class="alert-heading">Forbidden</h4>
-                    <p class="mb-0">Too many failed login attempts. Your IP is blocked.</p> 
-                    <div class="countdown-container">
+{% block title %}
+IP Blocked
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="alert alert-danger text-center" role="alert">
+                <h4 class="alert-heading">Forbidden</h4>
+                <p class="mb-0">Too many failed login attempts. Your IP is blocked.</p>
+                <div class="countdown-container">
                     <div class="countdown-timer" id="countdown-timer"></div>
                 </div>
-                </div>
-               
             </div>
+
         </div>
     </div>
+</div>
+{% endblock %}
+{% block script %}
 
-    <script>
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
+<script>
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function setCookie(name, value, days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        const expires = `expires=${date.toUTCString()}`;
+        document.cookie = `${name}=${value}; ${expires}; path=/`;
+    }
+
+    function startCountdown() {
+        const initialTimeInMinutes = 2;
+        let timeRemaining = getCookie('timeRemaining');
+
+        if (!timeRemaining) {
+            timeRemaining = initialTimeInMinutes * 60;
+            setCookie('timeRemaining', timeRemaining, 1); // Set the cookie with the initial time
+        } else {
+            timeRemaining = parseInt(timeRemaining, 10);
         }
 
-        function setCookie(name, value, days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = `expires=${date.toUTCString()}`;
-            document.cookie = `${name}=${value}; ${expires}; path=/`;
-        }
+        function updateCountdown() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
 
-        function startCountdown() {
-            const initialTimeInMinutes = 2;
-            let timeRemaining = getCookie('timeRemaining');
+            const countdownTimer = document.getElementById('countdown-timer');
+            countdownTimer.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-            if (!timeRemaining) {
-                timeRemaining = initialTimeInMinutes * 60;
-                setCookie('timeRemaining', timeRemaining, 1); // Set the cookie with the initial time
+            if (timeRemaining > 0) {
+                timeRemaining -= 1;
+                setCookie('timeRemaining', timeRemaining, 1); // Update the cookie with the current time remaining
+                setTimeout(updateCountdown, 1000);
             } else {
-                timeRemaining = parseInt(timeRemaining, 10);
+                // Remove the cookie when the countdown is finished
+                document.cookie = 'timeRemaining=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                window.location.href = "{% url 'user-login' %}";
             }
-
-            function updateCountdown() {
-                const minutes = Math.floor(timeRemaining / 60);
-                const seconds = timeRemaining % 60;
-
-                const countdownTimer = document.getElementById('countdown-timer');
-                countdownTimer.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-                if (timeRemaining > 0) {
-                    timeRemaining -= 1;
-                    setCookie('timeRemaining', timeRemaining, 1); // Update the cookie with the current time remaining
-                    setTimeout(updateCountdown, 1000);
-                } else {
-                    // Remove the cookie when the countdown is finished
-                    document.cookie = 'timeRemaining=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                    window.location.href = "{% url 'user-login' %}"; 
-                }
-            }
-
-            updateCountdown();
         }
 
-        startCountdown();
-    </script>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  </body>
-</html>
+        updateCountdown();
+    }
 
+    startCountdown();
+</script>
+{% endblock %}
