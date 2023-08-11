@@ -1,6 +1,5 @@
 from django.utils.crypto import get_random_string
 from django.utils import timezone
-from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth import login as auth_login
@@ -23,7 +22,11 @@ def login(request):
         email = request.POST['email']
         password = request.POST['password']
 
-        user = Users.objects.get(email=email)
+        try:
+            user = Users.objects.get(email=email)
+        except Users.DoesNotExist:
+            messages.error(request, 'User not found or incorrect email/password.')
+            return redirect('user-login')
         
         if check_password(password, user.password):
             if user.status == 'verified':
