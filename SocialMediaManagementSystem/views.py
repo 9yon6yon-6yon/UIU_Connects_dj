@@ -1,7 +1,7 @@
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.hashers import make_password
@@ -10,7 +10,13 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 from django.urls import reverse
+from django.http import HttpResponse
 from django.conf import settings
 from .models import *
 
@@ -207,13 +213,13 @@ def dashboard_view(request):
     return render(request, 'dashboard.html')
 
 def search_view(request):
-    return 
+    return render(request, 'dashboard.html')
 def posts_view(request):
-    return 
+    return render(request, 'dashboard.html')
 def create_post_view(request):
-    return 
+    return render(request, 'createpost.html')
 def chat_dashboard_view(request):
-    return 
+    return render(request, 'chat.html')
 def settings_view(request):
     email = request.session.get('email')
     context = {
@@ -231,8 +237,10 @@ def changestatus(request):
         user.save()
         messages.success(request, 'Changed to Active')
     return redirect('user.settings')
-def user_profile_view(request):
-    return 
+def user_profile_view(request,user_id):
+    user = get_object_or_404(Users, u_id=user_id)
+    context = {'user_id': user_id}
+    return render(request, 'dashboard.html', context )
 def logout(request):
     email = request.session.get('email')
     user = Users.objects.get(email=email)
@@ -240,3 +248,301 @@ def logout(request):
     user.save()
     auth_logout(request)
     return redirect('user-login') 
+
+
+def user_post(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        details = request.POST.get('details')
+        file_path = request.FILES.get('file_path')
+        
+        user_id = request.session.get('user_id')
+
+        if user_id:
+            user = Users.objects.get(u_id=user_id)
+            if file_path:
+                post = Posts(
+                    user_id=user,
+                    post_title=title,
+                    post_details=details,
+                    file_path=file_path
+                )
+                post.save()
+            else:
+                post = Posts(
+                    user_id=request.session['user_id'],
+                    post_title=title,
+                    post_details=details
+                )
+                post.save()
+            messages.success(request, 'General post created successfully.')
+            return redirect('create-post')
+        else:
+            messages.error(request, 'User session data missing.')
+            return render(request, 'createpost.html')
+    else:
+        messages.error(request, 'Some error occurred while creating post')
+        return render(request, 'createpost.html')
+
+def job_create(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        details = request.POST.get('details')
+        file_path = request.FILES.get('file_path')
+        
+        user_id = request.session.get('user_id')        
+        if user_id:
+            user = Users.objects.get(u_id=user_id)
+            if file_path:
+
+                post = Jobs(
+                    user_id=user,
+                    job_title=title,
+                    job_details=details,
+                    file_path=file_path
+                )
+                post.save()
+            else:
+                post = Posts(
+                    user_id=request.session['user_id'],
+                    job_title=title,
+                    job_details=details
+                )
+                post.save()
+            messages.success(request, 'Job post created successfully.')
+            return redirect('create-post')
+        else:
+            messages.error(request, 'User session data missing.')
+            return render(request, 'createpost.html')
+    else:
+        messages.error(request, 'Some error occurred while creating post')
+        return render(request, 'createpost.html')
+
+def event_create(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        details = request.POST.get('details')
+        file_path = request.FILES.get('file_path')
+        event_date = request.POST.get('eventdate')
+        
+        user_id = request.session.get('user_id')
+        if user_id:
+            user = Users.objects.get(u_id=user_id)
+            if file_path:
+                post = Events(
+                    user_id=user,
+                    event_title=title,
+                    event_details=details,
+                    file_path=file_path,
+                    event_date=event_date
+                )
+                post.save()
+            else:
+                post = Posts(
+                    user_id=request.session['user_id'],
+                    event_title=title,
+                    event_details=details,
+                    event_date=event_date
+                )
+                post.save()
+            messages.success(request, 'Job post created successfully.')
+            return redirect('create-post')
+        else:
+            messages.error(request, 'User session data missing.')
+            return render(request, 'createpost.html')
+    else:
+        messages.error(request, 'Some error occurred while creating post')
+        return render(request, 'createpost.html')
+
+def loadChat(request):
+    active_users= Users.objects.filter().exclude(u_id=request.session['user_id'])
+    return render(request, 'chat.html', {'active_users': active_users})
+
+
+# def loadSpecificChat(request, id):
+#     logged_in_user_id = request.session.get('user_id')
+#     logged_in_user = Users.objects.get(u_id=logged_in_user_id)
+
+#     selected_user = get_object_or_404(Users, u_id=id)
+
+#     sent_messages = Chats.objects.filter(
+#         sender=logged_in_user, receiver=selected_user
+#     )
+#     received_messages = Chats.objects.filter(
+#         sender=selected_user, receiver=logged_in_user
+#     )
+
+#     all_messages = list(sent_messages) + list(received_messages)
+    
+
+#     context = {'selected_user': selected_user, 'all_messages': all_messages}
+#     chat_content = render_to_string('chat-context.html', context)
+
+#     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+#         return HttpResponse(chat_content)
+#     else:
+#         return render(request, 'chat.html', context)
+# def sendChat(request, id):
+#     if request.method == 'POST':
+#         logged_in_user_id = request.session.get('user_id')
+#         logged_in_user = Users.objects.get(u_id=logged_in_user_id)
+#         selected_user = get_object_or_404(Users, u_id=id)
+
+#         message_text = request.POST.get('message')
+#         print(message_text)
+#         print(selected_user.u_id)
+#         if message_text:
+#             Chats.objects.create(
+#                 sender=logged_in_user, receiver=selected_user, message=message_text)
+
+#     return redirect('user.chat.show', id=id)
+
+
+# def sendChat(request, id):
+#     if request.method == 'POST':
+#         logged_in_user_id = request.session.get('user_id')
+#         logged_in_user = Users.objects.get(u_id=logged_in_user_id)
+#         selected_user = get_object_or_404(Users, u_id=id)
+
+#         message_text = request.POST.get('message')
+#         if message_text:
+#             # Load sender's private key
+#             sender_private_key = serialization.load_pem_private_key(
+#                 logged_in_user.private_key,
+#                 password=None,
+#                 backend=default_backend()
+#             )
+
+#             # Encrypt the chat message
+#             symmetric_key = Fernet.generate_key()
+#             cipher_suite = Fernet(symmetric_key)
+#             encrypted_message = cipher_suite.encrypt(message_text.encode())
+
+#             # Sign the encrypted message
+#             signature = sender_private_key.sign(
+#                 encrypted_message,
+#                 padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+#                 hashes.SHA256()
+#             )
+
+#             # Rest of your code to save the encrypted message, symmetric key, and signature to the database
+#             Chats.objects.create(
+#                 sender=logged_in_user,
+#                 receiver=selected_user,
+#                 encrypted_message=encrypted_message,
+#                 encrypted_symmetric_key=symmetric_key,
+#                 signature=signature
+#             )
+
+#     return redirect('user.chat.show', id=id)
+
+
+
+def sendChat(request, id):
+    if request.method == 'POST':
+        logged_in_user_id = request.session.get('user_id')
+        logged_in_user = Users.objects.get(u_id=logged_in_user_id)
+        selected_user = get_object_or_404(Users, u_id=id)
+
+        message_text = request.POST.get('message')
+        if message_text:
+            # Load sender's private key
+            sender_private_key = serialization.load_pem_private_key(
+                logged_in_user.private_key,
+                password=None,
+                backend=default_backend()
+            )
+
+            # Encrypt the chat message using receiver's public key
+            receiver_public_key = serialization.load_pem_public_key(
+                selected_user.public_key, backend=default_backend()
+            )
+            encrypted_message = receiver_public_key.encrypt(
+                message_text.encode(),
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+
+            # Sign the encrypted message
+            signature = sender_private_key.sign(
+                encrypted_message,
+                padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+                hashes.SHA256()
+            )
+
+            # Rest of your code to save the encrypted message and signature to the database
+            Chats.objects.create(
+                sender=logged_in_user,
+                receiver=selected_user,
+                encrypted_message=encrypted_message,
+                signature=signature
+            )
+
+    return redirect('user.chat.show', id=id)
+
+def loadSpecificChat(request, id):
+    logged_in_user_id = request.session.get('user_id')
+    logged_in_user = Users.objects.get(u_id=logged_in_user_id)
+
+    selected_user = get_object_or_404(Users, u_id=id)
+
+    sent_messages = Chats.objects.filter(
+        sender=logged_in_user, receiver=selected_user
+    )
+    received_messages = Chats.objects.filter(
+        sender=selected_user, receiver=logged_in_user
+    )
+
+    all_messages = list(sent_messages) + list(received_messages)
+    
+    for chat in all_messages:
+        if chat.verify_signature():
+            if chat.sender_id == logged_in_user:
+                sender_private_key = serialization.load_pem_private_key(
+                    logged_in_user.private_key, password=None, backend=default_backend()
+                )
+                
+                try:
+                    decrypted_message = sender_private_key.decrypt(
+                        chat.encrypted_message,
+                        padding.OAEP(
+                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                            algorithm=hashes.SHA256(),
+                            label=None
+                        )
+                    )
+                    chat.decrypted_message = decrypted_message.decode()
+                except Exception as e:
+                    chat.decrypted_message = f"Decryption Error: {str(e)}"
+            else:
+                receiver_private_key = serialization.load_pem_private_key(
+                    selected_user.private_key, password=None, backend=default_backend()
+                )
+
+                try:
+                    decrypted_message = receiver_private_key.decrypt(
+                        chat.encrypted_message,
+                        padding.OAEP(
+                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                            algorithm=hashes.SHA256(),
+                            label=None
+                        )
+                    )
+                    chat.decrypted_message = decrypted_message.decode()
+                except Exception as e:
+                    chat.decrypted_message = f"Decryption Error: {str(e)}"
+        else:
+            chat.decrypted_message = "Invalid Signature"
+    # Sort the messages by timestamp
+    all_messages.sort(key=lambda x: x.timestamp, reverse=False)
+
+    context = {'selected_user': selected_user, 'all_messages': all_messages}
+    chat_content = render_to_string('chat-context.html', context)
+
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return HttpResponse(chat_content)
+    else:
+        return render(request, 'chat.html', context)

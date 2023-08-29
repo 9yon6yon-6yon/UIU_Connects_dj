@@ -1,0 +1,43 @@
+{% load static %}
+<div class="py-2 px-4 border-bottom d-none d-lg-block">
+    <div class="d-flex align-items-center py-1">
+        <div class="position-relative">
+            <img src="{{ selected_user.image_path.url }}" class="rounded-circle mr-1"
+                alt="" width="40" height="40">
+        </div>
+        <div class="flex-grow-1 pl-3">
+            <strong>{{ selected_user.email }}</strong>
+        </div>
+    </div>
+</div>
+<div class="position-relative">
+    <div class="chat-messages p-4">
+        {% for message in all_messages %}
+            <div class="chat-message {% if message.sender == selected_user %}chat-message-left{% else %}chat-message-right{% endif %} pb-4">
+                <div>
+                    <img src="{{ message.sender.image_path.url }}" class="rounded-circle mr-1"
+                        alt="" width="40" height="40">
+                    <div class="text-muted small text-nowrap mt-2">{{ message.timestamp }}</div>
+                </div>
+                <div class="flex-shrink-1 bg-light rounded py-2 px-3 {% if message.sender == selected_user %}ml-3{% else %}mr-3{% endif %}">
+                    {% if message.sender == selected_user %}
+                        <div class="font-weight-bold mb-1">{{ message.sender.email }}</div>
+                    {% else %}
+                        <div class="font-weight-bold mb-1">You</div>
+                    {% endif %}
+                    {{ message.decrypted_message }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+<div class="flex-grow-0 py-3 px-4 border-top">
+    <form method="post" id="chat-form">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" class="form-control" name="message" id="message"
+                placeholder="Type your message">
+            <button type="submit" class="btn btn-primary">Send</button>
+        </div>
+    </form>
+</div>
