@@ -123,45 +123,22 @@ class Certificates(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
 
-# class Chats(models.Model):
-#     chat_id = models.BigAutoField(primary_key=True)
-#     sender = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='sender_chats')
-#     receiver = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='receiver_chats')
-#     message = models.TextField()
-#     message_hash = models.CharField(max_length=64, blank=True)
-#     created_at = models.DateTimeField(default=timezone.now)
-#     updated_at = models.DateTimeField(default=timezone.now)
-
-#     def save(self, *args, **kwargs):
-#         # Calculate and store message hash before saving
-#         if self.message:
-#             self.message_hash = hashlib.sha256(self.message.encode()).hexdigest()
-#         super().save(*args, **kwargs)
-
-
 class Chats(models.Model):
     chat_id = models.BigAutoField(primary_key=True)
-    sender = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='sent_chats')
-    receiver = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='received_chats')
-    encrypted_message = models.BinaryField(null=True)  # Store the encrypted message
-    signature = models.BinaryField(null=True)  # Store the signature
-    timestamp = models.DateTimeField(default=timezone.now)
+    sender = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='sender_chats')
+    receiver = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='receiver_chats')
+    message = models.TextField(null=True)
+    message_hash = models.CharField(max_length=64, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    def verify_signature(self):
-        sender_public_key = serialization.load_pem_public_key(
-            self.sender.public_key, backend=default_backend()
-        )
-        
-        try:
-            sender_public_key.verify(
-                self.signature,
-                self.encrypted_message,
-                padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-                hashes.SHA256()
-            )
-            return True
-        except InvalidSignature:
-            return False
+    def save(self, *args, **kwargs):
+        # Calculate and store message hash before saving
+        if self.message:
+            self.message_hash = hashlib.sha256(self.message.encode()).hexdigest()
+        super().save(*args, **kwargs)
+
+
 class Posts(models.Model):
     pst_id = models.BigAutoField(primary_key=True)
     user_id = models.ForeignKey(Users, on_delete=models.CASCADE)

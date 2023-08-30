@@ -10,11 +10,6 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 import re
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import padding
 from django.urls import reverse
 from django.http import HttpResponse
 from django.conf import settings
@@ -357,132 +352,6 @@ def event_create(request):
 def loadChat(request):
     active_users= Users.objects.filter().exclude(u_id=request.session['user_id'])
     return render(request, 'chat.html', {'active_users': active_users})
-
-
-# def loadSpecificChat(request, id):
-#     logged_in_user_id = request.session.get('user_id')
-#     logged_in_user = Users.objects.get(u_id=logged_in_user_id)
-
-#     selected_user = get_object_or_404(Users, u_id=id)
-
-#     sent_messages = Chats.objects.filter(
-#         sender=logged_in_user, receiver=selected_user
-#     )
-#     received_messages = Chats.objects.filter(
-#         sender=selected_user, receiver=logged_in_user
-#     )
-
-#     all_messages = list(sent_messages) + list(received_messages)
-    
-
-#     context = {'selected_user': selected_user, 'all_messages': all_messages}
-#     chat_content = render_to_string('chat-context.html', context)
-
-#     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-#         return HttpResponse(chat_content)
-#     else:
-#         return render(request, 'chat.html', context)
-# def sendChat(request, id):
-#     if request.method == 'POST':
-#         logged_in_user_id = request.session.get('user_id')
-#         logged_in_user = Users.objects.get(u_id=logged_in_user_id)
-#         selected_user = get_object_or_404(Users, u_id=id)
-
-#         message_text = request.POST.get('message')
-#         print(message_text)
-#         print(selected_user.u_id)
-#         if message_text:
-#             Chats.objects.create(
-#                 sender=logged_in_user, receiver=selected_user, message=message_text)
-
-#     return redirect('user.chat.show', id=id)
-
-
-# def sendChat(request, id):
-#     if request.method == 'POST':
-#         logged_in_user_id = request.session.get('user_id')
-#         logged_in_user = Users.objects.get(u_id=logged_in_user_id)
-#         selected_user = get_object_or_404(Users, u_id=id)
-
-#         message_text = request.POST.get('message')
-#         if message_text:
-#             # Load sender's private key
-#             sender_private_key = serialization.load_pem_private_key(
-#                 logged_in_user.private_key,
-#                 password=None,
-#                 backend=default_backend()
-#             )
-
-#             # Encrypt the chat message
-#             symmetric_key = Fernet.generate_key()
-#             cipher_suite = Fernet(symmetric_key)
-#             encrypted_message = cipher_suite.encrypt(message_text.encode())
-
-#             # Sign the encrypted message
-#             signature = sender_private_key.sign(
-#                 encrypted_message,
-#                 padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-#                 hashes.SHA256()
-#             )
-
-#             # Rest of your code to save the encrypted message, symmetric key, and signature to the database
-#             Chats.objects.create(
-#                 sender=logged_in_user,
-#                 receiver=selected_user,
-#                 encrypted_message=encrypted_message,
-#                 encrypted_symmetric_key=symmetric_key,
-#                 signature=signature
-#             )
-
-#     return redirect('user.chat.show', id=id)
-
-
-
-def sendChat(request, id):
-    if request.method == 'POST':
-        logged_in_user_id = request.session.get('user_id')
-        logged_in_user = Users.objects.get(u_id=logged_in_user_id)
-        selected_user = get_object_or_404(Users, u_id=id)
-
-        message_text = request.POST.get('message')
-        if message_text:
-            # Load sender's private key
-            sender_private_key = serialization.load_pem_private_key(
-                logged_in_user.private_key,
-                password=None,
-                backend=default_backend()
-            )
-
-            # Encrypt the chat message using receiver's public key
-            receiver_public_key = serialization.load_pem_public_key(
-                selected_user.public_key, backend=default_backend()
-            )
-            encrypted_message = receiver_public_key.encrypt(
-                message_text.encode(),
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                    algorithm=hashes.SHA256(),
-                    label=None
-                )
-            )
-
-            # Sign the encrypted message
-            signature = sender_private_key.sign(
-                encrypted_message,
-                padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
-                hashes.SHA256()
-            )
-
-            # Rest of your code to save the encrypted message and signature to the database
-            Chats.objects.create(
-                sender=logged_in_user,
-                receiver=selected_user,
-                encrypted_message=encrypted_message,
-                signature=signature
-            )
-
-    return redirect('user.chat.show', id=id)
-
 def loadSpecificChat(request, id):
     logged_in_user_id = request.session.get('user_id')
     logged_in_user = Users.objects.get(u_id=logged_in_user_id)
@@ -497,52 +366,38 @@ def loadSpecificChat(request, id):
     )
 
     all_messages = list(sent_messages) + list(received_messages)
-    
+    updated_messages = []
+
     for chat in all_messages:
-        if chat.verify_signature():
-            if chat.sender_id == logged_in_user:
-                sender_private_key = serialization.load_pem_private_key(
-                    logged_in_user.private_key, password=None, backend=default_backend()
-                )
-                
-                try:
-                    decrypted_message = sender_private_key.decrypt(
-                        chat.encrypted_message,
-                        padding.OAEP(
-                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                            algorithm=hashes.SHA256(),
-                            label=None
-                        )
-                    )
-                    chat.decrypted_message = decrypted_message.decode()
-                except Exception as e:
-                    chat.decrypted_message = f"Decryption Error: {str(e)}"
-            else:
-                receiver_private_key = serialization.load_pem_private_key(
-                    selected_user.private_key, password=None, backend=default_backend()
-                )
-
-                try:
-                    decrypted_message = receiver_private_key.decrypt(
-                        chat.encrypted_message,
-                        padding.OAEP(
-                            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                            algorithm=hashes.SHA256(),
-                            label=None
-                        )
-                    )
-                    chat.decrypted_message = decrypted_message.decode()
-                except Exception as e:
-                    chat.decrypted_message = f"Decryption Error: {str(e)}"
+        calculated_hash = hashlib.sha256(chat.message.encode()).hexdigest()
+        if calculated_hash != chat.message_hash:
+            chat.decrypted_message = "Message has been tampered with!"
         else:
-            chat.decrypted_message = "Invalid Signature"
-    # Sort the messages by timestamp
-    all_messages.sort(key=lambda x: x.timestamp, reverse=False)
+            updated_messages.append(chat)
 
-    context = {'selected_user': selected_user, 'all_messages': all_messages}
+    updated_messages.sort(key=lambda x: x.created_at, reverse=False)
+
+    context = {'selected_user': selected_user, 'all_messages': updated_messages}
     chat_content = render_to_string('chat-context.html', context)
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return HttpResponse(chat_content)
     else:
         return render(request, 'chat.html', context)
+
+def sendChat(request, id):
+    if request.method == 'POST':
+        logged_in_user_id = request.session.get('user_id')
+        logged_in_user = Users.objects.get(u_id=logged_in_user_id)
+        selected_user = get_object_or_404(Users, u_id=id)
+
+        message_text = request.POST.get('message')
+        if message_text:
+            message_hash = hashlib.sha256(message_text.encode()).hexdigest()
+            Chats.objects.create(
+                sender=logged_in_user,
+                receiver=selected_user,
+                message=message_text,
+                message_hash=message_hash
+            )
+    return redirect('user.chat.show', id=id)

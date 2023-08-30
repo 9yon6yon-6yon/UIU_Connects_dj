@@ -61,6 +61,7 @@
 <!-- HTML code for content sections -->
 <div id="User-section" class="content-section">
     <form>
+        {% csrf_token %}
         <div class="mb-3">
             <label for="id" class="form-label">User ID</label>
             <input type="text" class="form-control" id="id" value=" " disabled>
@@ -118,7 +119,7 @@
         <br>
 
         <form action="#" method="POST">
-            <!-- @csrf -->
+            {% csrf_token %}
             <div class="mb-3">
                 <label for="award_name" class="form-label">Award Name</label>
                 <input type="text" class="form-control" id="award_name" name="award_name">
@@ -185,7 +186,7 @@
         <br>
 
         <form action="#" method="POST">
-            @csrf
+            {% csrf_token %}
             <div class="mb-3">
                 <label for="company" class="form-label">Company</label>
                 <input type="text" class="form-control" id="company" name="company">
@@ -244,7 +245,7 @@
     <br>
 
     <form action="#" method="POST">
-        @csrf
+        {% csrf_token %}
         <div class="form-group">
             <label for="certification_name">Certification Name</label>
             <input type="text" id="certification_name" name="certification_name" value="" class="form-control" required>
@@ -311,7 +312,7 @@
     </table>
     <br>
     <form method="POST" action="#">
-        @csrf
+        {% csrf_token %}
         <div class="mb-3">
             <label for="skill-name" class="form-label">Skill name:</label>
             <input type="text" id="skill-name" name="skill_name" class="form-control" required>
