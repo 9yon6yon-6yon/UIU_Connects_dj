@@ -1,0 +1,18 @@
+{% extends "_base.html" %}
+
+{% block title %}Blocked{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <section class="section error-404 min-vh-100 d-flex flex-column align-items-center justify-content-center">
+      <h1>Blocked</h1>
+      <h2>You are currently blocked till {{ date }}</h2>
+      <a class="btn" href="{% url  'index' %}">Back to home</a>
+      <div class="credits">
+      <a href="{% url  'index' %}"></a>
+      </div>
+    </section>
+
+  </div>
+  {% endblock %}

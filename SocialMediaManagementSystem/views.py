@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.conf import settings
 from .models import *
+import hashlib
 
 def index(request):
     return render(request, 'index.html')
@@ -36,6 +37,11 @@ def login(request):
                 user.save()
                 request.session['user_id'] = user.u_id
                 request.session['email'] = user.email
+                UserActivityLog.objects.create(
+                user=user,
+                action="loggedin",
+                details="successfully logged in"
+                )
                 return redirect('user.dashboard')
             else:
                 messages.error(request, 'Your account is not verified yet. Please check your email for verification instructions.')
@@ -243,8 +249,11 @@ def logout(request):
     user.save()
     auth_logout(request)
     return redirect('user-login') 
-
-
+def calculate_file_checksum(file):
+    hasher = hashlib.sha256()
+    for chunk in file.chunks():
+        hasher.update(chunk)
+    return hasher.hexdigest()
 def user_post(request):
     if request.method == 'POST':
         title = request.POST.get('title')
@@ -256,20 +265,24 @@ def user_post(request):
         if user_id:
             user = Users.objects.get(u_id=user_id)
             if file_path:
+                file_checksum = calculate_file_checksum(file_path)
+
                 post = Posts(
                     user_id=user,
                     post_title=title,
                     post_details=details,
-                    file_path=file_path
+                    file_path=file_path,
+                    file_checksum=file_checksum
                 )
                 post.save()
             else:
                 post = Posts(
-                    user_id=request.session['user_id'],
+                    user_id=user,
                     post_title=title,
                     post_details=details
                 )
                 post.save()
+            
             messages.success(request, 'General post created successfully.')
             return redirect('create-post')
         else:

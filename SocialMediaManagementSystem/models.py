@@ -4,9 +4,8 @@ from django.contrib.auth.hashers import check_password
 from django.utils import timezone
 from cryptography.fernet import Fernet
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend
 
 import hashlib
@@ -23,6 +22,7 @@ class CustomUserManager(BaseUserManager):
 class Users(AbstractBaseUser):
     u_id = models.BigAutoField(primary_key=True)
     email = models.EmailField(unique=True)
+    USERNAME_FIELD = 'email'
     email_verified_at = models.DateTimeField(default=timezone.now)
     password = models.CharField(max_length=255)
     USER_TYPES = [
@@ -36,6 +36,8 @@ class Users(AbstractBaseUser):
     ]
     status = models.CharField(choices=STATUS_CHOICES, max_length=255, default='pending')
     is_active = models.BooleanField(default=False)
+    is_blocked = models.BooleanField(default=False)
+    block_end_date = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(default=timezone.now)
     
@@ -245,4 +247,8 @@ class Sessions(models.Model):
     user_agent = models.TextField(null=True)
     payload = models.TextField()
     last_activity = models.DateTimeField()
-    
+class UserActivityLog(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(default=timezone.now)
+    action = models.CharField(max_length=255)
+    details = models.TextField()

@@ -2,7 +2,8 @@ from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from SocialMediaManagementSystem.models import Users
-
+from django.shortcuts import redirect
+from django.utils import timezone
 class FailedLoginMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -35,3 +36,17 @@ class FailedLoginMiddleware:
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
+
+class BlockMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if request.user.is_authenticated and hasattr(request.user, 'block_end_date'):
+            current_time = timezone.now()
+            if request.user.is_blocked and current_time < request.user.block_end_date:
+               return render(request, 'blocked.html' , { 'date' : current_time })
+
+        return response
