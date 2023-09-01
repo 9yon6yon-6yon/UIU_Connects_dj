@@ -39,13 +39,23 @@ def login(request):
                 request.session['email'] = user.email
                 UserActivityLog.objects.create(
                 user=user,
-                action="loggedin",
+                action="log in attempt",
                 details="successfully logged in"
                 )
                 return redirect('user.dashboard')
             else:
+                UserActivityLog.objects.create(
+                user=user,
+                action="log in attempt",
+                details="account not verrified"
+                )
                 messages.error(request, 'Your account is not verified yet. Please check your email for verification instructions.')
         else:
+            UserActivityLog.objects.create(
+                user=user,
+                action="log in attempt",
+                details="wrong credential"
+                )
             messages.error(request, 'Invalid email or password.')
 
     return render(request, 'login.html')

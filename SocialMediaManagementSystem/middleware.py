@@ -44,9 +44,9 @@ class BlockMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
 
-        if request.user.is_authenticated and hasattr(request.user, 'block_end_date'):
-            current_time = timezone.now()
-            if request.user.is_blocked and current_time < request.user.block_end_date:
-               return render(request, 'blocked.html' , { 'date' : current_time })
+        # if request.user.is_authenticated and hasattr(request.user, 'block_end_date'):
+        #     current_time = timezone.now()
+        #     if request.user.is_blocked and current_time < request.user.block_end_date:
+        #        return render(request, 'blocked.html' , { 'date' : current_time })
 
         return response
